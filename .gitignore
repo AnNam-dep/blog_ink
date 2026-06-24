@@ -1,0 +1,30 @@
+# Rust build output
+target/
+
+# Stellar local data / identities
+.stellar/
+
+# Node / frontend
+node_modules/
+dist/
+.vite/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Deploy logs / temp
+deploy-output.txt
+
+# Backup files
+*.bak
+*.backup-before-remove-hero-buttons
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
