@@ -1,161 +1,336 @@
-$ErrorActionPreference = "Stop"
-
-$ProjectName = "blog_ink"
-$SourceAccount = "blog_ink_admin"
-$Network = "testnet"
-
-$ProjectRoot = Split-Path -Parent $PSScriptRoot
-Set-Location $ProjectRoot
-
-Write-Host ""
-Write-Host "==============================="
-Write-Host " blog_ink deploy script"
-Write-Host "==============================="
-Write-Host ""
-
-Write-Host "Step 1: Running cargo fmt..."
-cargo fmt
-
-Write-Host ""
-Write-Host "Step 2: Running cargo test..."
-cargo test
-
-Write-Host ""
-Write-Host "Step 3: Building Soroban contract..."
-stellar contract build
-
-$WasmCandidates = @(
-  ".\target\wasm32v1-none\release\blog_ink.wasm",
-  ".\target\wasm32-unknown-unknown\release\blog_ink.wasm"
+param(
+  [string]$SourceAccount = "deployer",
+  [string]$Network = "testnet"
 )
 
-$WasmPath = $null
+$ErrorActionPreference = "Stop"
 
-foreach ($Candidate in $WasmCandidates) {
-  if (Test-Path $Candidate) {
-    $WasmPath = (Resolve-Path $Candidate).Path
-    break
+function Step {
+  param([string]$Message)
+
+  Write-Host ""
+  Write-Host "=== $Message ==="
+}
+
+function Get-FirstMatch {
+  param(
+    [string]$Text,
+    [string]$Pattern
+  )
+
+  $Match = [regex]::Match($Text, $Pattern)
+
+  if ($Match.Success) {
+    return $Match.Value
+  }
+
+  return ""
+}
+
+$RepoRoot = Split-Path -Parent $PSScriptRoot
+
+Set-Location $RepoRoot
+
+$WasmPath = Join-Path $RepoRoot "target\wasm32v1-none\release\blog_ink.wasm"
+
+$TmpLog = Join-Path $RepoRoot "deploy-stdout.tmp"
+
+$DeployLog = Join-Path $RepoRoot "deploy-output.txt"
+
+
+Step "Check environment"
+
+stellar --version
+
+cargo --version
+
+node -v
+
+npm -v
+
+
+Step "Use Stellar Testnet"
+
+cmd.exe /d /s /c "stellar network use $Network > `"$TmpLog`" 2>&1"
+
+Get-Content $TmpLog -Raw | Write-Host
+
+
+Step "Ensure deployer identity exists and is funded"
+
+cmd.exe /d /s /c "stellar keys address $SourceAccount > `"$TmpLog`" 2>&1"
+
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "Creating and funding deployer identity..."
+
+  cmd.exe /d /s /c "stellar keys generate --fund $SourceAccount --network $Network > `"$TmpLog`" 2>&1"
+
+  Get-Content $TmpLog -Raw | Write-Host
+} else {
+  Get-Content $TmpLog -Raw | Write-Host
+}
+
+cmd.exe /d /s /c "stellar keys fund $SourceAccount --network $Network > `"$TmpLog`" 2>&1"
+
+Get-Content $TmpLog -Raw | Write-Host
+
+cmd.exe /d /s /c "stellar keys address $SourceAccount > `"$TmpLog`" 2>&1"
+
+$AddressOutput = Get-Content $TmpLog -Raw
+
+Write-Host $AddressOutput
+
+$DeployerAddress = Get-FirstMatch $AddressOutput "G[A-Z2-7]{55}"
+
+if (-not $DeployerAddress) {
+  cmd.exe /d /s /c "stellar keys public-key $SourceAccount > `"$TmpLog`" 2>&1"
+
+  $AddressOutput = Get-Content $TmpLog -Raw
+
+  Write-Host $AddressOutput
+
+  $DeployerAddress = Get-FirstMatch $AddressOutput "G[A-Z2-7]{55}"
+}
+
+if (-not $DeployerAddress) {
+  throw "Could not detect deployer public key."
+}
+
+Write-Host "Deployer address: $DeployerAddress"
+
+
+Step "Format, test, and build contract"
+
+cargo fmt --all
+
+cargo test --workspace
+
+cargo build --workspace --target wasm32v1-none --release
+
+if (-not (Test-Path $WasmPath)) {
+  throw "WASM file not found at $WasmPath"
+}
+
+
+Step "Deploy contract"
+
+$DeployCommand = "stellar contract deploy --wasm `"$WasmPath`" --source-account $SourceAccount --network $Network --alias blog_ink"
+
+cmd.exe /d /s /c "$DeployCommand > `"$TmpLog`" 2>&1"
+
+$DeployOutput = Get-Content $TmpLog -Raw
+
+Write-Host $DeployOutput
+
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "Direct deploy failed. Trying upload then deploy with wasm hash..."
+
+  $UploadCommand = "stellar contract upload --source-account $SourceAccount --network $Network --wasm `"$WasmPath`""
+
+  cmd.exe /d /s /c "$UploadCommand > `"$TmpLog`" 2>&1"
+
+  $UploadOutput = Get-Content $TmpLog -Raw
+
+  Write-Host $UploadOutput
+
+  if ($LASTEXITCODE -ne 0) {
+    throw "WASM upload failed."
+  }
+
+  $WasmHash = Get-FirstMatch $UploadOutput "[a-fA-F0-9]{64}"
+
+  if (-not $WasmHash) {
+    throw "Could not detect wasm hash after upload."
+  }
+
+  $DeployHashCommand = "stellar contract deploy --source-account $SourceAccount --network $Network --wasm-hash $WasmHash --alias blog_ink"
+
+  cmd.exe /d /s /c "$DeployHashCommand > `"$TmpLog`" 2>&1"
+
+  $DeployOutput = Get-Content $TmpLog -Raw
+
+  Write-Host $DeployOutput
+
+  if ($LASTEXITCODE -ne 0) {
+    throw "Contract deploy from wasm hash failed."
   }
 }
 
-if (-not $WasmPath) {
-  throw "Cannot find blog_ink.wasm. Please check whether stellar contract build succeeded."
-}
-
-Write-Host ""
-Write-Host "WASM found at: $WasmPath"
-
-Write-Host ""
-Write-Host "Step 4: Checking Stellar identity..."
-
-$ExistingAddress = $null
-
-try {
-  $ExistingAddress = stellar keys address $SourceAccount 2>$null
-} catch {
-  $ExistingAddress = $null
-}
-
-if (-not $ExistingAddress) {
-  Write-Host "Identity not found. Creating and funding testnet identity: $SourceAccount"
-  stellar keys generate $SourceAccount --network $Network --fund
-} else {
-  Write-Host "Identity already exists: $SourceAccount"
-  Write-Host "Address: $ExistingAddress"
-}
-
-Write-Host ""
-Write-Host "Step 5: Deploying contract to Stellar Testnet..."
-
-$DeployStdout = ".\deploy-stdout.tmp"
-$DeployStderr = ".\deploy-stderr.tmp"
-$DeployOutput = ".\deploy-output.txt"
-
-Remove-Item $DeployStdout -Force -ErrorAction SilentlyContinue
-Remove-Item $DeployStderr -Force -ErrorAction SilentlyContinue
-Remove-Item $DeployOutput -Force -ErrorAction SilentlyContinue
-
-$DeployCommand = "stellar contract deploy --wasm `"$WasmPath`" --source-account $SourceAccount --network $Network --alias $ProjectName"
-
-Write-Host ""
-Write-Host "Running:"
-Write-Host $DeployCommand
-Write-Host ""
-
-$Process = Start-Process `
-  -FilePath "cmd.exe" `
-  -ArgumentList "/d", "/c", $DeployCommand `
-  -NoNewWindow `
-  -Wait `
-  -PassThru `
-  -RedirectStandardOutput $DeployStdout `
-  -RedirectStandardError $DeployStderr
-
-$CombinedOutput = @()
-
-if (Test-Path $DeployStdout) {
-  $CombinedOutput += Get-Content $DeployStdout
-}
-
-if (Test-Path $DeployStderr) {
-  $CombinedOutput += Get-Content $DeployStderr
-}
-
-$CombinedOutput | Tee-Object -FilePath $DeployOutput
-
-Remove-Item $DeployStdout -Force -ErrorAction SilentlyContinue
-Remove-Item $DeployStderr -Force -ErrorAction SilentlyContinue
-
-if ($Process.ExitCode -ne 0) {
-  Write-Host ""
-  Write-Host "Deploy failed. Please check deploy-output.txt"
-  throw "stellar contract deploy failed with exit code $($Process.ExitCode)"
-}
-
-$ContractId = Select-String -Path $DeployOutput -Pattern "C[A-Z0-9]{55}" -AllMatches |
-  ForEach-Object { $_.Matches.Value } |
-  Select-Object -First 1
+$ContractId = Get-FirstMatch $DeployOutput "C[A-Z2-7]{55}"
 
 if (-not $ContractId) {
-  Write-Host ""
-  Write-Host "Deploy output:"
-  Get-Content $DeployOutput
-  throw "Cannot parse Contract ID from deploy-output.txt. Open deploy-output.txt and check the deploy output."
+  throw "Could not detect contract ID from deploy output."
 }
 
-Write-Host ""
-Write-Host "Contract deployed successfully!"
 Write-Host "Contract ID: $ContractId"
 
-$ContractId | Set-Content ".\CONTRACT_ID.txt" -Encoding UTF8
 
-$FrontendSrc = ".\frontend\src"
-New-Item -ItemType Directory -Force $FrontendSrc | Out-Null
+Step "Save contract id and update frontend config"
 
-$ContractConfig = @"
-export const CONTRACT_ID = "$ContractId";
+[System.IO.File]::WriteAllText(
+  (Join-Path $RepoRoot "CONTRACT_ID.txt"),
+  $ContractId,
+  [System.Text.UTF8Encoding]::new($false)
+)
 
-export const NETWORK = "testnet";
+$ConfigPath = Join-Path $RepoRoot "frontend\src\contractConfig.ts"
 
-export const NETWORK_PASSPHRASE = "Test SDF Network ; September 2015";
+$ConfigContent = Get-Content $ConfigPath -Raw
 
-export const RPC_URL = "https://soroban-testnet.stellar.org";
+$ConfigContent = $ConfigContent -replace 'contractId: ".*"', "contractId: `"$ContractId`""
 
-export const STELLAR_EXPERT_CONTRACT_URL =
-  "https://stellar.expert/explorer/testnet/contract/" + CONTRACT_ID;
-"@
+[System.IO.File]::WriteAllText(
+  $ConfigPath,
+  $ConfigContent,
+  [System.Text.UTF8Encoding]::new($false)
+)
 
-$ContractConfig | Set-Content ".\frontend\src\contractConfig.ts" -Encoding UTF8
 
-Write-Host ""
-Write-Host "Saved Contract ID to:"
-Write-Host "- CONTRACT_ID.txt"
-Write-Host "- frontend/src/contractConfig.ts"
+Step "Create sample blog post transaction"
 
-Write-Host ""
-Write-Host "Stellar Expert Contract URL:"
-Write-Host "https://stellar.expert/explorer/testnet/contract/$ContractId"
+$PostId = "demo_post_101"
 
-Write-Host ""
-Write-Host "Next evidence screenshot needed:"
-Write-Host "Take screenshot of this terminal as evidence/contract-deployed.png"
+$Title = "Blog Ink Demo Post"
+
+$ContentHash = "ipfs://blog-ink-demo-post"
+
+$PublishCommand = "stellar contract invoke --id $ContractId --source-account $SourceAccount --network $Network -- publish_post --author $DeployerAddress --post_id $PostId --title `"$Title`" --content_hash `"$ContentHash`""
+
+cmd.exe /d /s /c "$PublishCommand > `"$TmpLog`" 2>&1"
+
+$PublishOutput = Get-Content $TmpLog -Raw
+
+Write-Host $PublishOutput
+
+if ($LASTEXITCODE -ne 0) {
+  throw "publish_post invocation failed."
+}
+
+
+Step "Create sample tip transaction"
+
+$TipAmount = 25
+
+$TipCommand = "stellar contract invoke --id $ContractId --source-account $SourceAccount --network $Network -- tip_post --reader $DeployerAddress --post_id $PostId --amount $TipAmount"
+
+cmd.exe /d /s /c "$TipCommand > `"$TmpLog`" 2>&1"
+
+$TipOutput = Get-Content $TmpLog -Raw
+
+Write-Host $TipOutput
+
+if ($LASTEXITCODE -ne 0) {
+  throw "tip_post invocation failed."
+}
+
+$TxHash = Get-FirstMatch $TipOutput "[a-fA-F0-9]{64}"
+
+if (-not $TxHash) {
+  $TxHash = Get-FirstMatch $PublishOutput "[a-fA-F0-9]{64}"
+}
+
+if ($TxHash) {
+  [System.IO.File]::WriteAllText(
+    (Join-Path $RepoRoot "TX_HASH.txt"),
+    $TxHash,
+    [System.Text.UTF8Encoding]::new($false)
+  )
+
+  [System.IO.File]::WriteAllText(
+    (Join-Path $RepoRoot "SUCCESSFUL_TX.txt"),
+    $TxHash,
+    [System.Text.UTF8Encoding]::new($false)
+  )
+}
+
+
+Step "Write deployment evidence"
+
+$DeploymentLines = @(
+  "# blog_ink Deployment Evidence",
+  "",
+  "Network: Stellar Testnet",
+  "",
+  "Contract ID: $ContractId",
+  "",
+  "Deployer address: $DeployerAddress",
+  "",
+  "Sample post ID: $PostId",
+  "",
+  "Sample title: $Title",
+  "",
+  "Sample content hash: $ContentHash",
+  "",
+  "Sample tip amount: $TipAmount",
+  "",
+  "Contract explorer:",
+  "https://stellar.expert/explorer/testnet/contract/$ContractId",
+  "",
+  "Transaction hash:",
+  "$TxHash",
+  "",
+  "Transaction explorer:",
+  "https://stellar.expert/explorer/testnet/tx/$TxHash",
+  "",
+  "Publish output:",
+  "",
+  $PublishOutput,
+  "",
+  "Tip output:",
+  "",
+  $TipOutput
+)
+
+[System.IO.File]::WriteAllLines(
+  (Join-Path $RepoRoot "DEPLOYMENT.md"),
+  $DeploymentLines,
+  [System.Text.UTF8Encoding]::new($false)
+)
+
+$FullLog = @(
+  "Contract ID: $ContractId",
+  "",
+  "Deployer address: $DeployerAddress",
+  "",
+  "Transaction hash: $TxHash",
+  "",
+  "Publish output:",
+  $PublishOutput,
+  "",
+  "Tip output:",
+  $TipOutput
+) -join "`r`n"
+
+[System.IO.File]::WriteAllText(
+  $DeployLog,
+  $FullLog,
+  [System.Text.UTF8Encoding]::new($false)
+)
+
+
+Step "Verify frontend with deployed contract"
+
+Set-Location (Join-Path $RepoRoot "frontend")
+
+npm install
+
+npm run type-check
+
+npm test
+
+npm run build
+
+Set-Location $RepoRoot
+
+
+Step "Deployment complete"
+
+Write-Host "Contract ID: $ContractId"
+
+if ($TxHash) {
+  Write-Host "Transaction hash: $TxHash"
+} else {
+  Write-Host "No tx hash detected. Check DEPLOYMENT.md and deploy-output.txt."
+}
+
+git status
