@@ -1,0 +1,89 @@
+name: Level 3 CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  smart-contract:
+    name: Smart Contract CI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32v1-none
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run contract tests
+        run: cargo test --workspace
+
+      - name: Build contract WASM
+        run: cargo build --workspace --target wasm32v1-none --release
+
+  frontend:
+    name: Frontend CI
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check frontend
+        run: npm run type-check
+
+      - name: Run frontend tests
+        run: npm test
+
+      - name: Build frontend
+        run: npm run build
+
+  project-structure:
+    name: Project Structure Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check required Level 3 files
+        shell: bash
+        run: |
+          test -f README.md
+          test -f Cargo.toml
+          test -f Cargo.lock
+          test -f contracts/blog_ink/src/lib.rs
+          test -f contracts/blog_ink/src/test.rs
+          test -f frontend/package.json
+          test -f frontend/package-lock.json
+          test -f frontend/src/App.tsx
+          test -f frontend/src/App.css
+          test -f frontend/src/main.tsx
+          test -f frontend/src/contractConfig.ts
+          test -f frontend/src/services/wallet.ts
+          test -f frontend/src/services/contract.ts
+          test -f frontend/src/services/contract.test.ts
