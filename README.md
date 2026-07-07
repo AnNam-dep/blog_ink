@@ -1,309 +1,309 @@
 # blog_ink
 
-## Project Description
+blog_ink is a Stellar Testnet dApp for publishing blog metadata and tracking reader tips through a Soroban smart contract and a Freighter wallet dashboard.
 
-**blog_ink** is a Soroban smart contract and Stellar Testnet dApp that powers a paid blog-tipping workflow for writers and readers.
+The project demonstrates a complete Stellar Level 3 dApp flow with smart contract logic, contract tests, deployment evidence, frontend wallet signing, Soroban RPC integration, CI/CD, and local verification scripts.
 
-Authors can publish blog posts by registering a post ID, title, and content hash on-chain. Readers can tip the posts they enjoy, and the contract keeps a transparent per-article tipping ledger.
+## Problem
 
-The MVP focuses on one core creator-economy action: helping readers support writers through a verifiable Stellar transaction.
+Independent writers often publish content on centralized platforms.
 
-## Project Vision
+This makes it difficult to independently verify:
 
-The long-term goal of **blog_ink** is to give independent writers a fair, transparent, and permissionless monetization rail on Stellar.
+- who published a post
+- which content hash belongs to the post
+- how much support a post received
+- how much a reader contributed
+- how much an author earned
 
-By storing post metadata and tipping ledgers on-chain, authors can track their earnings without relying on a centralized platform. Readers can also verify that their support was recorded transparently.
+## Solution
 
-Future versions can expand into:
+blog_ink stores post metadata and reader tip activity on Stellar Testnet.
 
-* Paid comments
-* Recurring reader support
-* Co-author royalty splits
-* Token-based creator memberships
-* Stablecoin-based real tipping flows
+An author can publish a post with a post ID, title, and content hash.
 
-## Built With
+A reader can tip a post through a signed Freighter transaction.
 
-* Stellar Testnet
-* Soroban smart contracts
-* Rust
-* Stellar CLI
-* React
-* Vite
-* TypeScript
-* StellarWalletsKit
-* Stellar JavaScript SDK
+The smart contract tracks total posts, total tips, author earnings, and reader tip history.
 
-## Level 2 Requirements Covered
+## Repository
 
-| Requirement                                | Status                             |
-| ------------------------------------------ | ---------------------------------- |
-| Multi-wallet integration                   | Implemented with StellarWalletsKit |
-| Smart contract deployed on Stellar Testnet | Completed                          |
-| Contract called successfully               | Completed                          |
-| Transaction status visible                 | Implemented in frontend            |
-| 3 error types handled                      | Implemented in frontend            |
-| Minimum 2 meaningful commits               | Completed                          |
-| README with setup instructions             | Completed                          |
-| Deployed Contract ID included              | Completed                          |
-| Stellar Expert transaction link included   | Completed                          |
+GitHub repository:
 
-## Network
+https://github.com/AnNam-dep/blog_ink
 
-```txt
+## Stellar Testnet Deployment
+
+Network:
+
 Stellar Testnet
-```
-
-## Deployed Contract
 
 Contract ID:
 
-```txt
-CAXATGRIGAE7MB247G7PKNU2ISNYMMSHJMLYGTEXFFFFXNQ35EDQ7UIW
-```
+`	ext
+CDS5RL6EQA7LY37GLRDX3EUKO2KPNXMXKFLKTT4VZM3MF5QYK5QINCJB
+`
 
-Stellar Expert Contract Link:
+Contract explorer:
 
-```txt
-https://stellar.expert/explorer/testnet/contract/CAXATGRIGAE7MB247G7PKNU2ISNYMMSHJMLYGTEXFFFFXNQ35EDQ7UIW
-```
+`	ext
+https://stellar.expert/explorer/testnet/contract/CDS5RL6EQA7LY37GLRDX3EUKO2KPNXMXKFLKTT4VZM3MF5QYK5QINCJB
+`
 
-## Successful Contract Call
+## Successful Contract Interaction
 
-The contract was successfully called on Stellar Testnet using the `publish_post` function.
+Transaction hash:
 
-Transaction Hash:
+`	ext
+c17756228d621044996ec7e504b8e9486e8825c4f768424e51872a6874981ad6
+`
 
-```txt
-bdcf457131617f31c75a595c73ac3f3364f06345a8be67b14e8d049c67e3011a
-```
+Transaction explorer:
 
-Stellar Expert Transaction Link:
+`	ext
+https://stellar.expert/explorer/testnet/tx/c17756228d621044996ec7e504b8e9486e8825c4f768424e51872a6874981ad6
+`
 
-```txt
-https://stellar.expert/explorer/testnet/tx/bdcf457131617f31c75a595c73ac3f3364f06345a8be67b14e8d049c67e3011a
-```
+## Features
 
-## Smart Contract Features
+- Freighter wallet connect
+- Freighter wallet disconnect
+- connected wallet address display
+- publish post metadata
+- tip post
+- read post details
+- read author earnings
+- read reader tip history
+- read total posts
+- read total tips
+- transaction signing
+- transaction hash display
+- loading states
+- handled error states
+- activity feed
+- responsive dashboard layout
+- CI/CD workflow
+- local verification script
+- deployment automation
 
-The Soroban smart contract supports the following functions:
+## Smart Contract
 
-### `publish_post`
+Contract location:
 
-Registers a new blog post on-chain.
+`	ext
+contracts/blog_ink
+`
 
-Stored data:
+The contract includes these public functions:
 
-* Author address
-* Post ID
-* Title
-* Content hash
-* Total tips
-* Tip count
-* Created timestamp
-* Updated timestamp
+- publish_post
+- tip_post
+- get_post
+- get_reader_tip
+- get_author_earnings
+- get_total_posts
+- get_total_tips
 
-### `tip_post`
+The contract uses:
 
-Records a reader tip for a post.
+- custom post struct
+- author earnings storage
+- reader tip storage
+- persistent storage
+- custom errors
+- contract events
+- authorization checks
+- contract tests
 
-Updated data:
+## Frontend
 
-* Post total tips
-* Post tip count
-* Reader tip amount
-* Author earnings
-* Global total tips
+Frontend location:
 
-### `get_post`
+`	ext
+frontend
+`
 
-Reads post metadata and tipping data from the contract.
+Important files:
 
-### `get_reader_tip`
+- frontend/src/App.tsx
+- frontend/src/App.css
+- frontend/src/contractConfig.ts
+- frontend/src/services/wallet.ts
+- frontend/src/services/contract.ts
+- frontend/src/services/contract.test.ts
 
-Reads how much a specific reader tipped a specific post.
+The frontend contract service uses:
 
-### `get_author_earnings`
+- Soroban RPC
+- TransactionBuilder
+- Contract.call
+- prepareTransaction
+- Freighter signTransaction
+- sendTransaction
+- nativeToScVal
+- scValToNative
 
-Reads total earnings for a specific author.
+Frontend functions map to contract functions:
 
-### `get_total_posts`
+- publishPost -> publish_post
+- tipPost -> tip_post
+- getPost -> get_post
+- getReaderTip -> get_reader_tip
+- getAuthorEarnings -> get_author_earnings
+- getTotalPosts -> get_total_posts
+- getTotalTips -> get_total_tips
+- getStats -> get_total_posts + get_total_tips
 
-Reads the total number of posts registered in the contract.
+## Repository Structure
 
-### `get_total_tips`
-
-Reads the total amount of tips recorded by the contract.
-
-## Contract Events
-
-The contract publishes event-style records for important actions:
-
-* `PostPublished`
-* `TipSent`
-
-These events make the app easier to track and can support a frontend activity feed.
-
-## Frontend Features
-
-The frontend includes:
-
-* Stellar Testnet dashboard UI
-* Wallet connect and disconnect flow
-* Multi-wallet integration through StellarWalletsKit
-* Contract ID display
-* Publish post panel
-* Tip post panel
-* Read contract state panel
-* Transaction monitor
-* Transaction hash display
-* Stellar Expert transaction link
-* Activity feed
-* Handled error panel
-
-## Handled Errors
-
-The frontend handles at least 3 Level 2 error types:
-
-1. Wallet not found
-2. User rejected transaction
-3. Transaction failed / insufficient balance
-
-## Project Structure
-
-```txt
+`	ext
 blog_ink
 ├── contracts
 │   └── blog_ink
-│       ├── src
-│       │   ├── lib.rs
-│       │   └── test.rs
-│       └── Cargo.toml
+│       ├── Cargo.toml
+│       └── src
+│           ├── lib.rs
+│           └── test.rs
 ├── frontend
-│   ├── src
-│   │   ├── App.tsx
-│   │   ├── App.css
-│   │   ├── contractConfig.ts
-│   │   └── main.tsx
-│   ├── package.json
 │   ├── index.html
+│   ├── package.json
+│   ├── package-lock.json
 │   ├── tsconfig.json
-│   └── vite.config.ts
+│   ├── vite.config.ts
+│   └── src
+│       ├── App.css
+│       ├── App.tsx
+│       ├── contractConfig.ts
+│       ├── main.tsx
+│       ├── vite-env.d.ts
+│       └── services
+│           ├── contract.test.ts
+│           ├── contract.ts
+│           └── wallet.ts
 ├── scripts
 │   ├── deploy-and-save.ps1
-│   └── setup-frontend.ps1
+│   └── verify-level3.ps1
+├── .github
+│   └── workflows
+│       └── ci.yml
+├── docs
+│   ├── ARCHITECTURE.md
+│   └── QUALITY_AND_VERIFICATION.md
 ├── CONTRACT_ID.txt
+├── TX_HASH.txt
+├── SUCCESSFUL_TX.txt
+├── DEPLOYMENT.md
+├── vercel.json
+├── Cargo.toml
+├── Cargo.lock
 ├── README.md
 └── .gitignore
-```
+`
 
-## How to Run Locally
+## Local Setup
 
-### 1. Clone the repository
+Clone the repository:
 
-```bash
-git clone https://github.com/YOUR_USERNAME/blog_ink.git
+`powershell
+git clone https://github.com/AnNam-dep/blog_ink.git
 cd blog_ink
-```
+`
 
-### 2. Build and test the smart contract
+Install frontend dependencies:
 
-```bash
-cargo test
-stellar contract build
-```
-
-### 3. Deploy the contract to Stellar Testnet
-
-On Windows PowerShell:
-
-```powershell
-Set-ExecutionPolicy -Scope Process Bypass -Force
-.\scripts\deploy-and-save.ps1
-```
-
-The deploy script will:
-
-* Run contract tests
-* Build the WASM contract
-* Check or create the Stellar Testnet identity
-* Deploy the contract
-* Save the Contract ID to `CONTRACT_ID.txt`
-* Save frontend config to `frontend/src/contractConfig.ts`
-
-### 4. Run the frontend
-
-```bash
+`powershell
 cd frontend
 npm install
-npm run build
+`
+
+Run frontend locally:
+
+`powershell
 npm run dev
-```
+`
 
-Open the local Vite URL in the browser:
+## Contract Commands
 
-```txt
-http://localhost:5173
-```
+From the repository root:
 
-## How to Use the App
+`powershell
+cargo fmt --all
+cargo test --workspace
+cargo build --workspace --target wasm32v1-none --release
+`
 
-1. Open the frontend.
-2. Connect a Stellar wallet on Testnet.
-3. Publish a post using:
+## Frontend Commands
 
-   * Post ID
-   * Title
-   * Content hash
-4. Tip a post using:
+From the frontend folder:
 
-   * Post ID
-   * Tip amount
-5. Read post data from the contract.
-6. Check transaction status and transaction hash in the transaction monitor.
-7. Open the Stellar Expert transaction link to verify the contract call.
+`powershell
+npm run type-check
+npm test
+npm run build
+`
 
-## Example Contract Call
+## Full Local Verification
 
-This successful Testnet call registered a blog post through the `publish_post` function:
+From the repository root:
 
-```bash
-stellar contract invoke --id CAXATGRIGAE7MB247G7PKNU2ISNYMMSHJMLYGTEXFFFFXNQ35EDQ7UIW --source-account blog_ink_admin --network testnet -- publish_post --author <AUTHOR_ADDRESS> --post_id postcli1 --title "CLI Test Post" --content_hash "ipfs://cli-test"
-```
+`powershell
+powershell -ExecutionPolicy Bypass -File scripts/verify-level3.ps1
+`
 
-Verified transaction:
+## Deployment
 
-```txt
-https://stellar.expert/explorer/testnet/tx/bdcf457131617f31c75a595c73ac3f3364f06345a8be67b14e8d049c67e3011a
-```
+From the repository root:
 
-## Submission Proof
+`powershell
+powershell -ExecutionPolicy Bypass -File scripts/deploy-and-save.ps1
+`
 
-For the Level 2 submission, the key proof items are:
+Deployment evidence is stored in:
 
-Contract ID:
+- CONTRACT_ID.txt
+- TX_HASH.txt
+- SUCCESSFUL_TX.txt
+- DEPLOYMENT.md
+- frontend/src/contractConfig.ts
 
-```txt
-CAXATGRIGAE7MB247G7PKNU2ISNYMMSHJMLYGTEXFFFFXNQ35EDQ7UIW
-```
+## CI/CD
 
-Successful contract call:
+GitHub Actions workflow:
 
-```txt
-https://stellar.expert/explorer/testnet/tx/bdcf457131617f31c75a595c73ac3f3364f06345a8be67b14e8d049c67e3011a
-```
+`	ext
+.github/workflows/ci.yml
+`
+
+The CI pipeline runs:
+
+- Rust formatting
+- contract tests
+- contract WASM build
+- frontend dependency install
+- frontend type-check
+- frontend tests
+- frontend production build
+- project structure checks
+
+## Current Status
+
+Completed:
+
+- Soroban smart contract
+- contract tests
+- Freighter wallet service
+- frontend contract integration
+- responsive dashboard
+- frontend tests
+- deployment automation
+- deployment evidence
+- verification automation
+- GitHub Actions CI configuration
+- Vercel deployment configuration
+- generated test snapshots removed from git tracking
 
 ## Notes
 
-This MVP records tipping amounts as on-chain ledger values called `ink credits`.
+This repository does not include private keys, secret phrases, dependency folders, local build outputs, or local deploy logs.
 
-The current version focuses on proving the Level 2 requirements:
-
-* Contract deployment
-* Contract write/read logic
-* Wallet-based frontend flow
-* Transaction status tracking
-* Error handling
-* Verifiable Stellar Testnet transaction
-
-A future production version can integrate real stablecoin transfers such as USDC on Stellar.
+Generated folders, local logs, and Soroban test snapshots are ignored by git.
