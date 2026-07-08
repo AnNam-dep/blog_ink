@@ -40,29 +40,21 @@ Stellar Testnet
 
 Contract ID:
 
-`	ext
 CDS5RL6EQA7LY37GLRDX3EUKO2KPNXMXKFLKTT4VZM3MF5QYK5QINCJB
-`
 
 Contract explorer:
 
-`	ext
 https://stellar.expert/explorer/testnet/contract/CDS5RL6EQA7LY37GLRDX3EUKO2KPNXMXKFLKTT4VZM3MF5QYK5QINCJB
-`
 
 ## Successful Contract Interaction
 
 Transaction hash:
 
-`	ext
 c17756228d621044996ec7e504b8e9486e8825c4f768424e51872a6874981ad6
-`
 
 Transaction explorer:
 
-`	ext
 https://stellar.expert/explorer/testnet/tx/c17756228d621044996ec7e504b8e9486e8825c4f768424e51872a6874981ad6
-`
 
 ## Features
 
@@ -90,9 +82,7 @@ https://stellar.expert/explorer/testnet/tx/c17756228d621044996ec7e504b8e9486e882
 
 Contract location:
 
-`	ext
 contracts/blog_ink
-`
 
 The contract includes these public functions:
 
@@ -119,9 +109,7 @@ The contract uses:
 
 Frontend location:
 
-`	ext
 frontend
-`
 
 Important files:
 
@@ -156,7 +144,7 @@ Frontend functions map to contract functions:
 
 ## Repository Structure
 
-`	ext
+~~~text
 blog_ink
 ├── contracts
 │   └── blog_ink
@@ -198,65 +186,71 @@ blog_ink
 ├── Cargo.lock
 ├── README.md
 └── .gitignore
-`
+~~~
 
 ## Local Setup
 
 Clone the repository:
 
-`powershell
+~~~powershell
 git clone https://github.com/AnNam-dep/blog_ink.git
+
 cd blog_ink
-`
+~~~
 
 Install frontend dependencies:
 
-`powershell
+~~~powershell
 cd frontend
+
 npm install
-`
+~~~
 
 Run frontend locally:
 
-`powershell
+~~~powershell
 npm run dev
-`
+~~~
 
 ## Contract Commands
 
 From the repository root:
 
-`powershell
+~~~powershell
 cargo fmt --all
+
 cargo test --workspace
+
 cargo build --workspace --target wasm32v1-none --release
-`
+~~~
 
 ## Frontend Commands
 
 From the frontend folder:
 
-`powershell
+~~~powershell
 npm run type-check
+
 npm test
+
 npm run build
-`
+~~~
 
 ## Full Local Verification
 
 From the repository root:
 
-`powershell
+~~~powershell
 powershell -ExecutionPolicy Bypass -File scripts/verify-level3.ps1
-`
+~~~
 
 ## Deployment
 
 From the repository root:
 
-`powershell
+~~~powershell
 powershell -ExecutionPolicy Bypass -File scripts/deploy-and-save.ps1
-`
+~~~
 
 Deployment evidence is stored in:
 
@@ -270,9 +264,7 @@ Deployment evidence is stored in:
 
 GitHub Actions workflow:
 
-`	ext
 .github/workflows/ci.yml
-`
 
 The CI pipeline runs:
 
